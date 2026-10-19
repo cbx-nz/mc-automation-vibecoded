@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "III",
+    "RGR",
+    "SSS"
+  ],
+  "key": {
+    "I": { "item": "minecraft:iron_ingot" },
+    "R": { "item": "minecraft:redstone" },
+    "G": { "item": "minecraft:glass_pane" },
+    "S": { "item": "minecraft:stone" }
+  },
+  "result": {
+    "count": 1,
+    "id": "vibeautomation:computer"
+  }
+}

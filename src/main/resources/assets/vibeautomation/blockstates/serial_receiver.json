@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "vibeautomation:block/serial_receiver" },
+    "facing=south": { "model": "vibeautomation:block/serial_receiver", "y": 180 },
+    "facing=west": { "model": "vibeautomation:block/serial_receiver", "y": 270 },
+    "facing=east": { "model": "vibeautomation:block/serial_receiver", "y": 90 }
+  }
+}

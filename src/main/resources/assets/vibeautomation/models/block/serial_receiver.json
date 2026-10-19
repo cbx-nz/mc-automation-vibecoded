@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "vibeautomation:block/serial_receiver_side",
+    "front": "vibeautomation:block/serial_receiver_front",
+    "side": "vibeautomation:block/serial_receiver_side",
+    "bottom": "vibeautomation:block/serial_receiver_side"
+  }
+}

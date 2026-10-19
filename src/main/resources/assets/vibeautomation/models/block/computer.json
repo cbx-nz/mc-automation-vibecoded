@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "vibeautomation:block/computer_top",
+    "front": "vibeautomation:block/computer_front",
+    "side": "vibeautomation:block/computer_side",
+    "bottom": "vibeautomation:block/computer_top"
+  }
+}
