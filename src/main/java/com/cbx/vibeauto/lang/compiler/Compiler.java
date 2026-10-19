@@ -191,10 +191,10 @@ public class Compiler {
             case Expr.Call c -> {
                 // Callee can be a PropertyAccess (e.g. obj.method()) or Variable (function())
                 if (c.callee() instanceof Expr.PropertyAccess pa) {
-                    compileExpr(pa.object());
                     for (Expr.CallArg arg : c.arguments()) {
                         compileExpr(arg.value());
                     }
+                    compileExpr(pa.object());
                     int methodConst = program.addConstant(pa.name().lexeme());
                     program.emit(OpCode.CALL_METHOD, methodConst, c.paren().line());
                 } else if (c.callee() instanceof Expr.Variable v) {

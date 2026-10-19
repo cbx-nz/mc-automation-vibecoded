@@ -77,4 +77,126 @@ public class LangTest {
         assertEquals(1, printed.size());
         assertEquals(15L, printed.get(0));
     }
+
+    @Test
+    public void testMethodCallWithArguments() {
+        String code = """
+            void setup() {
+                serial.output("Hello World");
+            }
+        """;
+
+        Lexer lexer = new Lexer(code);
+        Parser parser = new Parser(lexer.tokenize());
+        Compiler compiler = new Compiler();
+        CompiledProgram prog = compiler.compile(parser.parse());
+
+        List<String> outputLogs = new ArrayList<>();
+        VirtualMachine vm = new VirtualMachine(prog);
+        vm.setGlobal("serial", (VirtualMachine.SerialRef) (machine, method) -> {
+            if ("output".equals(method)) {
+                outputLogs.add(String.valueOf(machine.popStack()));
+            }
+            return null;
+        });
+
+        vm.callFunction("setup");
+        vm.step(1000);
+
+        assertEquals(1, outputLogs.size());
+        assertEquals("Hello World", outputLogs.get(0));
+    }
+
+    @Test
+    public void testChestTransferScript() {
+        String code = """
+            void setup() {
+                serial.Begin();
+                serial.output("Init");
+            }
+
+            void loop() {
+                sourceChest = input("chest", -1, 0, 0);
+                destChest = output("chest", 1, 0, 0);
+                itemTarget = item.minecraft.iron_ingot;
+
+                if (!destChest.is_full()) {
+                    if (sourceChest.contains(itemTarget)) {
+                        int count = sourceChest.count(itemTarget);
+                        bool success = transfer(itemTarget, sourceChest, destChest, 16);
+                        if (success) {
+                            serial.output("Transferred successfully");
+                        }
+                    }
+                }
+            }
+        """;
+
+        Lexer lexer = new Lexer(code);
+        Parser parser = new Parser(lexer.tokenize());
+        Compiler compiler = new Compiler();
+        CompiledProgram prog = compiler.compile(parser.parse());
+
+        assertFalse(lexer.hasErrors());
+        assertFalse(parser.hasErrors());
+        assertFalse(compiler.hasErrors());
+
+        VirtualMachine vm = new VirtualMachine(prog);
+        List<String> logs = new ArrayList<>();
+        vm.setGlobal("serial", (VirtualMachine.SerialRef) (machine, method) -> {
+            if ("output".equals(method)) {
+                logs.add(String.valueOf(machine.popStack()));
+            }
+            return null;
+        });
+        vm.setGlobal("item", "item");
+
+        // Mock devices
+        class MockDevice implements VirtualMachine.DeviceRef {
+            int items = 32;
+            @Override
+            public Object getProperty(String name) { return VirtualMachine.NullVal.INSTANCE; }
+            @Override
+            public Object invokeMethod(VirtualMachine m, String method) {
+                if ("is_full".equals(method)) return items >= 64;
+                if ("contains".equals(method)) {
+                    m.popStack(); // item
+                    return items > 0;
+                }
+                if ("count".equals(method)) {
+                    m.popStack(); // item
+                    return (long) items;
+                }
+                return VirtualMachine.NullVal.INSTANCE;
+            }
+        }
+
+        MockDevice src = new MockDevice();
+        MockDevice dst = new MockDevice();
+
+        vm.registerNative("input", (m, args) -> {
+            m.popStack(); m.popStack(); m.popStack(); m.popStack();
+            return src;
+        });
+        vm.registerNative("output", (m, args) -> {
+            m.popStack(); m.popStack(); m.popStack(); m.popStack();
+            return dst;
+        });
+        vm.registerNative("transfer", (m, args) -> {
+            Object a4 = m.popStack();
+            Object a3 = m.popStack();
+            Object a2 = m.popStack();
+            Object a1 = m.popStack();
+            return true;
+        });
+
+        vm.callFunction("setup");
+        vm.step(1000);
+        assertEquals("Init", logs.get(0));
+
+        vm.callFunction("loop");
+        vm.step(1000);
+        assertEquals(2, logs.size());
+        assertEquals("Transferred successfully", logs.get(1));
+    }
 }

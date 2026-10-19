@@ -1,0 +1,49 @@
+// =============================================================================
+// VibeAutomation (CMP): Chest-to-Chest Item Transfer Script
+// =============================================================================
+// Block Layout:
+// - Place the Computer block.
+// - Place the Source Chest adjacent to the West (-1, 0, 0).
+// - Place the Destination Chest adjacent to the East (+1, 0, 0).
+// - (Optional) Place a Serial Receiver within 16 blocks to view console logs.
+// =============================================================================
+
+void setup() {
+    serial.Begin();
+    serial.output("=== Chest Transfer System Starting ===");
+    serial.output("Initial system time: " + timestamp());
+}
+
+void loop() {
+    // 1. Reference source and destination inventory handles by relative offset (x, y, z)
+    //    input(type, rx, ry, rz) and output(type, rx, ry, rz)
+    sourceChest = input("chest", -1, 0, 0);
+    destChest = output("chest", 1, 0, 0);
+
+    // 2. Specify the target item (item.minecraft.<id> or "iron_ingot")
+    targetItem = item.minecraft.iron_ingot;
+
+    // 3. Safety check: make sure destination is not full
+    if (destChest.is_full()) {
+        serial.warning("Destination chest is FULL. Transfer suspended.");
+        return;
+    }
+
+    // 4. Check if source chest contains the desired item
+    if (sourceChest.contains(targetItem)) {
+        int available = sourceChest.count(targetItem);
+        serial.output("Source has " + available + " items available.");
+
+        // 5. Transfer up to 16 items per tick cycle
+        //    transfer(item, fromDevice, toDevice, batchSize)
+        bool transferred = transfer(targetItem, sourceChest, destChest, 16);
+
+        if (transferred) {
+            serial.output("[" + timestamp() + "] Successfully moved items to destination!");
+        } else {
+            serial.warning("Transfer failed (no matching items or slot obstructed).");
+        }
+    } else {
+        serial.output("Source chest empty / no target items found. Waiting...");
+    }
+}
